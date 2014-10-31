@@ -1,4 +1,3 @@
-from sets import Set
 
 class HNode:
   uID = None
@@ -8,35 +7,46 @@ class HNode:
   def __init__(self):
     self.neighbors = dict()
 
-  def addNeightbor(self, val, node):
+  def addNeighbor(self, val, node):
     if val in self.neighbors:
       self.neighbors[val].add(node)
     else:
-      self.neighbors[val] = Set([node])
+      self.neighbors[val] = set([node])
+
+  def getValNeighbors(self, keys):
+    out = []
+    for key in keys:
+      if key in self.neighbors:
+        nodes = self.neighbors[key]
+        for n in nodes:
+          out.append(n)
+    return out
 
 
 class HoneyGraph:
-  graph = []
-  uIDC = 0
+  comb = {}
 
   def setup(self, n,data): 
     # Load nodes
+    graph = []
+    uIDC = 0
+
     for row in range(0,n):
       currentRow = data[row]
       hRow = []
       for i in currentRow:
         node = HNode()
-        node.uID = self.uIDC
-        self.uIDC += 1
+        node.uID = uIDC
+        uIDC += 1
         node.val = i
         hRow.append(node)
-      self.graph.append(hRow)
+      graph.append(hRow)
 
     for row in range(0,n):
-      currentRow = self.graph[row]
+      currentRow = graph[row]
       nextRow = None
       if row < n-1:
-        nextRow = self.graph[row+1]
+        nextRow = graph[row+1]
 
       self.loadRowNeighbors(currentRow)
       if row < n-1:
@@ -44,13 +54,13 @@ class HoneyGraph:
         if row > 1:
           self.loadNextRowNeighborsSide(currentRow, row, nextRow)
 
-    for n in self.graph:
-      for i in n:
-        print i. uID
-        print i.val
-        print i.neighbors
-        print "-------------"
-        
+    nodes = [item for sublist in graph for item in sublist]
+    for n in nodes:
+      if n.val in self.comb:
+        self.comb[n.val].add(n)
+      else:
+        self.comb[n.val] = set([n])
+
   def loadRowNeighbors(self, row):
     n = len(row)
     for i,node in enumerate(row):
@@ -59,8 +69,8 @@ class HoneyGraph:
           next = row[i + 1]
         else:
           next = row[0]
-        node.addNeightbor(next.val, next)
-        next.addNeightbor(node.val, node)
+        node.addNeighbor(next.val, next)
+        next.addNeighbor(node.val, node)
 
   def loadNextRowNeighborsVerts(self, currentRow, rN, nextRow):
     vertR = self.getVerts(rN)
@@ -70,8 +80,8 @@ class HoneyGraph:
       atNode = currentRow[0]
       nodes = [nextRow[i] for i in vertNR]
       for n in nodes:
-        atNode.addNeightbor(n.val, n)
-        n.addNeightbor(atNode.val, atNode)
+        atNode.addNeighbor(n.val, n)
+        n.addNeighbor(atNode.val, atNode)
 
     for i, rVertI in enumerate(vertR):
       nRVertI = vertNR[i]
@@ -79,15 +89,14 @@ class HoneyGraph:
       (nextI,prevI) = self.getLoopNeighbors(nRVertI,len(nextRow))
       nodes = [nextRow[prevI], nextRow[nRVertI], nextRow[nextI]]
       for n in nodes:
-        atNode.addNeightbor(n.val, n)
-        n.addNeightbor(atNode.val, atNode)
+        atNode.addNeighbor(n.val, n)
+        n.addNeighbor(atNode.val, atNode)
 
   def loadNextRowNeighborsSide(self, currentRow, rN, nextRow):
     cRI = list(set(range(0,len(currentRow))) - set(self.getVerts(rN)))
     nRI = list(set(range(0,len(nextRow))) - set(self.getVerts(rN+1)))
-    print currentRow, "------------------"
-    chunksCR =[cRI[x:x+rN-1] for x in xrange(0, len(cRI), rN-1)]
-    chunksNR =[nRI[x:x+rN] for x in xrange(0, len(nRI), rN)]
+    chunksCR =[cRI[x:x+rN-1] for x in range(0, len(cRI), rN-1)]
+    chunksNR =[nRI[x:x+rN] for x in range(0, len(nRI), rN)]
 
     for i, side in enumerate(chunksCR):
       nRSide = chunksNR[i]
@@ -95,8 +104,8 @@ class HoneyGraph:
         atNode = currentRow[nI]
         nodes = [nextRow[nRSide[j]], nextRow[nRSide[j+1]]]
         for n in nodes:
-          atNode.addNeightbor(n.val, n)
-          n.addNeightbor(atNode.val, atNode)
+          atNode.addNeighbor(n.val, n)
+          n.addNeighbor(atNode.val, atNode)
 
   def getVerts(self, rN):
     return [x for x in range(0,(6 * rN)) if x % rN == 0]
@@ -116,15 +125,3 @@ class HoneyGraph:
         prev = n-1
     return (next,prev)
 
-
-def main():
-  n = 3
-  a = list('A')
-  b = list('BCDEFG')
-  c = list('UANTCASTYSWQ')
-  #d = list('EORNOTOBEKANGARTOB')
-  data = [a,b,c]
-  g = HoneyGraph()
-  g.setup(n, data)
-
-main()
